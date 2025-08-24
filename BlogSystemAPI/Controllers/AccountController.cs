@@ -1,5 +1,6 @@
 ﻿using BlogSystemAPI.DTO;
 using BlogSystemAPI.Models;
+using BlogSystemAPI.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -16,105 +17,48 @@ namespace BlogSystemAPI.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        public AccountController(UserManager<ApplicationUser> usermanager, SignInManager<ApplicationUser> signInManager)
-        {
-            Usermanager = usermanager;
-            SignInManager = signInManager;
-        }
+        public AccountService Service { get; }
 
-        public UserManager<ApplicationUser> Usermanager { get; }
-        public SignInManager<ApplicationUser> SignInManager { get; }
+        public AccountController(AccountService service)
+        {
+            Service = service;
+        }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody]RegisterDTO registerDTO)
         {
-            if (ModelState.IsValid)
-            {
-                ApplicationUser user = new ApplicationUser();
-                
-                user.UserName = registerDTO.UserName;
-                user.Email = registerDTO.Email;
-                user.PasswordHash = registerDTO.Password;
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+          
+            var result = await Service.Register(registerDTO);
 
-                IdentityResult result = 
-                        await Usermanager.CreateAsync(user, registerDTO.Password);
-
-                if (result.Succeeded)
-                {
-                    return Created();
-                }
-                foreach (var item in result.Errors)
-                {
-                    ModelState.AddModelError("Password", item.Description);
-                }
-            }
-            return BadRequest(ModelState);
+            if (!result.IsAuthenticated)
+                return BadRequest(result.message);
+            return Ok(result);
         }
 
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody]LoginDTO loginDTO)
         {
-            if (ModelState.IsValid)
-            {
-                ApplicationUser? UserFromDB = 
-                    await Usermanager.FindByNameAsync(loginDTO.Username);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-                if (UserFromDB == null) return NotFound();
+            var result = await Service.Login(loginDTO);
+            if(!result.IsAuthenticated)
+                return BadRequest(result.message);
 
-                bool found =
-                        await Usermanager.CheckPasswordAsync(UserFromDB, UserFromDB.PasswordHash);
-                if (found)
-                {
-                    #region Claims
-                    List<Claim> claims = new List<Claim>();
-                    claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
-                    claims.Add(new Claim(ClaimTypes.NameIdentifier, UserFromDB.Id));
-                    claims.Add(new Claim(ClaimTypes.Name, UserFromDB.UserName));
-
-                    var UserRoles = await Usermanager.GetRolesAsync(UserFromDB);
-                    foreach (var role in UserRoles)
-                    {
-                        claims.Add(new Claim(ClaimTypes.Role, role));
-                    }
-                    #endregion
-
-                    #region Signing Credentials
-                    string SecretKey = "this is my second project [BlogSystemAPI] in Web API";
-                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
-
-                    var signCred = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-                    #endregion
-
-                    #region Design Token
-                    var token = new JwtSecurityToken (
-                        claims: claims, 
-                        expires: DateTime.Now.AddHours(1),
-                        signingCredentials: signCred
-                    );
-                    #endregion
-
-                    var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-                    return Ok( new
-                    {
-                        tokenString,
-                        Expiration = DateTime.UtcNow.AddHours(1)
-                    });
-                }
-                ModelState.AddModelError("User Name", "User Name OR Password Invalid");
-            }
-            return BadRequest(ModelState);
+            return Ok(result); 
         }
 
         [HttpGet("Logout")]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
             if (!User.Identity.IsAuthenticated)
-            {
-                return BadRequest(new { message = "No user is logged in" });
-            }
+                    return BadRequest(new { message = "No user is logged in" });
+            
+            var result = await Service.LogoutAsync();
 
-            SignInManager.SignOutAsync();
-            return Ok(new {message = "Log Out Successfully"});
+            if (result)
+                return Ok(new { Message = "Logout Successful" });
+            return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "Logout Failed" });
         }
     }
 }
