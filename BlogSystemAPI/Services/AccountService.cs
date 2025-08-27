@@ -108,7 +108,7 @@ namespace BlogSystemAPI.Services
                 Roles = UserRoles.ToList(),
                 token = tokenString,
                 ExpiresOn = DateTime.UtcNow.AddHours(1)
-            });
+            };
         }
 
         public async Task<bool> LogoutAsync()
