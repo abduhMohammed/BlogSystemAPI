@@ -7,6 +7,7 @@ namespace BlogSystemAPI.UnitOfWork
     {
         AppDbContext db;
         GenaricRepository<BlogPost> PostRepo;
+        GenaricRepository<Category> CategRopo;
 
         public UnitWork(AppDbContext db)
         {
@@ -23,6 +24,23 @@ namespace BlogSystemAPI.UnitOfWork
                 }
                 return PostRepo;
             }
+        }
+
+        public GenaricRepository<Category> CategoryRepository
+        {
+            get
+            {
+                if (CategRopo == null)
+                {
+                    CategRopo = new GenaricRepository<Category>(db);
+                }
+                return CategRopo;
+            }
+        }
+
+        public void Save()
+        {
+            db.SaveChanges();
         }
     }
 }

@@ -28,7 +28,7 @@ namespace BlogSystemAPI.Services
                     Id = p.Id,
                     Title = p.Title,
                     Content = p.Content,
-                    Status = p.Status,
+                    Status = p.Status
                 };
                 blogPostDTOs.Add(post);
             }
@@ -65,14 +65,14 @@ namespace BlogSystemAPI.Services
             };
 
             unit.PostRepository.Add(post);
-            unit.PostRepository.Save();
+            unit.Save();
 
             return new BlogPostDTO
             {
-                Id = PDTO.Id,
-                Title = PDTO.Title,
-                Content = PDTO.Content,
-                Status = PDTO.Status
+                Id = post.Id,
+                Title = post.Title,
+                Content = post.Content,
+                Status = post.Status
             };
         }
 

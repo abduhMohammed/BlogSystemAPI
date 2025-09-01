@@ -11,19 +11,24 @@ namespace BlogSystemAPI.Services
 {
     public class AccountService
     {
-        public AccountService(UserManager<ApplicationUser> usermanager, SignInManager<ApplicationUser> signInManager)
+        public AccountService
+            (UserManager<ApplicationUser> usermanager,
+            RoleManager<IdentityRole> roleManager,
+            SignInManager<ApplicationUser> signInManager)
         {
             Usermanager = usermanager;
+            RoleManager = roleManager;
             SignInManager = signInManager;
         }
 
         public UserManager<ApplicationUser> Usermanager { get; }
+        public RoleManager<IdentityRole> RoleManager { get; }
         public SignInManager<ApplicationUser> SignInManager { get; }
 
         public async Task<AuthDTO> Register(RegisterDTO dto)
         {
-            var existingUser = Usermanager.FindByNameAsync(dto.UserName);
-            var existingEmail = Usermanager.FindByEmailAsync(dto.Email);
+            var existingUser = await Usermanager.FindByNameAsync(dto.UserName);
+            var existingEmail = await Usermanager.FindByEmailAsync(dto.Email);
 
             if (existingUser != null || existingEmail != null)
                 return new AuthDTO { message = "User or Email Already registerd" };
@@ -44,7 +49,10 @@ namespace BlogSystemAPI.Services
                 }
             }
 
-            await Usermanager.AddToRoleAsync(user, "User");
+            if (await RoleManager.RoleExistsAsync("User"))
+            {
+                await Usermanager.AddToRoleAsync(user, "User");
+            }
 
             return new AuthDTO
             {
@@ -58,10 +66,9 @@ namespace BlogSystemAPI.Services
 
         public async Task<AuthDTO> Login(LoginDTO dto)
         {
-            ApplicationUser? UserFromDB = await Usermanager.FindByNameAsync(dto.Username);
-            bool found = await Usermanager.CheckPasswordAsync(UserFromDB, UserFromDB.PasswordHash);
+            ApplicationUser UserFromDB = await Usermanager.FindByNameAsync(dto.Username);
 
-            if (UserFromDB == null || !found)
+            if (UserFromDB == null || !await Usermanager.CheckPasswordAsync(UserFromDB, dto.Password))
             {
                 return new AuthDTO
                 {

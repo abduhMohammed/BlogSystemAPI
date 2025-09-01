@@ -1,4 +1,5 @@
 using BlogSystemAPI.Models;
+using BlogSystemAPI.Services;
 using BlogSystemAPI.UnitOfWork;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -44,6 +45,9 @@ namespace BlogSystemAPI
 
             });
 
+            builder.Services.AddScoped<AccountService>();
+            builder.Services.AddScoped<CategoryService>();
+            builder.Services.AddScoped<PostService>();
             builder.Services.AddScoped<UnitWork>();
 
             var app = builder.Build();
