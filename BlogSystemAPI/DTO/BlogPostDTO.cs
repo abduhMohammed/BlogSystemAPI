@@ -12,5 +12,7 @@ namespace BlogSystemAPI.DTO
         public String Content { get; set; }
 
         public string? Status { get; set; }
+        
+        public string? CategoryName { get; set; }
     }
 }

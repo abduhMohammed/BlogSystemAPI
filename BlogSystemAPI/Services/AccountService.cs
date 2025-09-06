@@ -117,18 +117,5 @@ namespace BlogSystemAPI.Services
                 ExpiresOn = DateTime.UtcNow.AddHours(1)
             };
         }
-
-        public async Task<bool> LogoutAsync()
-        {
-            try
-            {
-                await SignInManager.SignOutAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
     }
 }

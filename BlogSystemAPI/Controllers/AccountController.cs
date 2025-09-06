@@ -47,18 +47,5 @@ namespace BlogSystemAPI.Controllers
 
             return Ok(result); 
         }
-
-        [HttpGet("Logout")]
-        public async Task<IActionResult> Logout()
-        {
-            if (!User.Identity.IsAuthenticated)
-                    return BadRequest(new { message = "No user is logged in" });
-            
-            var result = await Service.LogoutAsync();
-
-            if (result)
-                return Ok(new { Message = "Logout Successful" });
-            return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "Logout Failed" });
-        }
     }
 }

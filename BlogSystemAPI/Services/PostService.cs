@@ -1,6 +1,7 @@
 ﻿using BlogSystemAPI.DTO;
 using BlogSystemAPI.Models;
 using BlogSystemAPI.UnitOfWork;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlogSystemAPI.Services
 {
@@ -14,9 +15,12 @@ namespace BlogSystemAPI.Services
 
         public List<BlogPostDTO> GetAll()
         {
-            List<BlogPost> posts = unit.PostRepository.GetAll();
+            var posts = unit.PostRepository
+                .GetAll()
+                .Include(c => c.Category)
+                .ToList();
 
-            if (posts.Count == 0)
+            if (!posts.Any())
                 return new List<BlogPostDTO>();
 
             List<BlogPostDTO> blogPostDTOs = new List<BlogPostDTO>();
@@ -28,7 +32,8 @@ namespace BlogSystemAPI.Services
                     Id = p.Id,
                     Title = p.Title,
                     Content = p.Content,
-                    Status = p.Status
+                    Status = p.Status,
+                    CategoryName = p.Category?.Name
                 };
                 blogPostDTOs.Add(post);
             }
@@ -37,7 +42,10 @@ namespace BlogSystemAPI.Services
 
         public BlogPostDTO GetById(int id)
         {
-            BlogPost? post = unit.PostRepository.GetById(id);
+            BlogPost? post = unit.PostRepository
+                .GetAll()
+                .Include(c => c.Category)
+                .FirstOrDefault(p => p.Id == id);
 
             if (post == null) return null;
             else
@@ -47,7 +55,8 @@ namespace BlogSystemAPI.Services
                     Id = post.Id,
                     Title = post.Title,
                     Content = post.Content,
-                    Status = post.Status
+                    Status = post.Status,
+                    CategoryName = post.Category?.Name
                 };
 
                 return blogPostDTO;
@@ -56,12 +65,20 @@ namespace BlogSystemAPI.Services
 
         public BlogPostDTO Add(BlogPostDTO PDTO)
         {
+            var category = unit.CategoryRepository
+                       .GetAll()
+                       .FirstOrDefault(c => c.Name == PDTO.CategoryName);
+
+            if (category == null)
+                throw new Exception("Invalid Category Name");
+
             BlogPost post = new BlogPost()
             {
                 Id = PDTO.Id,
                 Title = PDTO.Title,
                 Content = PDTO.Content,
-                Status = PDTO.Status
+                Status = PDTO.Status,
+                CategoryID = category.Id
             };
 
             unit.PostRepository.Add(post);
@@ -72,28 +89,45 @@ namespace BlogSystemAPI.Services
                 Id = post.Id,
                 Title = post.Title,
                 Content = post.Content,
-                Status = post.Status
+                Status = post.Status,
+                CategoryName = category.Name
             };
         }
 
         public string Update(BlogPostDTO PDTO)
         {
-            var existingPost = unit.PostRepository.GetById(PDTO.Id);
+            var existingPost = unit.PostRepository
+                .GetAll()
+                .Include(p => p.Category)
+                .FirstOrDefault(p => p.Id == PDTO.Id);
+
             if (existingPost == null)
                 return "NotFound";
 
-            if (existingPost.Id == PDTO.Id && existingPost.Title == PDTO.Title
-                && existingPost.Content == PDTO.Content && existingPost.Status == PDTO.Status)
-            { return "NoChanges"; }
-            else
+            var category = unit.CategoryRepository
+                   .GetAll()
+                   .FirstOrDefault(c => c.Name == PDTO.CategoryName);
+
+            if (category == null)
+                return "InvalidCategory";
+
+            // Check if no changes
+            if (existingPost.Title == PDTO.Title
+                && existingPost.Content == PDTO.Content
+                && existingPost.Status == PDTO.Status
+                && existingPost.CategoryID == category.Id)
             {
-                existingPost.Id = PDTO.Id;
-                existingPost.Title = PDTO.Title;
-                existingPost.Content = PDTO.Content;
-                existingPost.Status = PDTO.Status;
+                return "NoChanges";
             }
+
+            // Apply updates
+            existingPost.Title = PDTO.Title;
+            existingPost.Content = PDTO.Content;
+            existingPost.Status = PDTO.Status;
+            existingPost.CategoryID = category.Id;
+
             unit.PostRepository.Update(existingPost);
-            unit.PostRepository.Save();
+            unit.Save();
 
             return "Updated";
         }
@@ -104,7 +138,7 @@ namespace BlogSystemAPI.Services
             if (toDo == null) return false;
 
             unit.PostRepository.Delete(toDo);
-            unit.PostRepository.Save();
+            unit.Save();
 
             return true;
         }

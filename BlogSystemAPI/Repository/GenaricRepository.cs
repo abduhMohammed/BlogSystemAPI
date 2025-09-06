@@ -10,9 +10,9 @@ namespace BlogSystemAPI.Repository
             this.db = db;
         }
 
-        public List<TEntity> GetAll()
+        public IQueryable<TEntity> GetAll()
         {
-            return db.Set<TEntity>().ToList();
+            return db.Set<TEntity>().AsQueryable();
         }
 
         public TEntity GetById(int id)

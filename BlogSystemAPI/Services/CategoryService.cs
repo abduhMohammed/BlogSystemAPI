@@ -14,8 +14,8 @@ namespace BlogSystemAPI.Services
 
         public List<CategoryDTO> GetAll()
         {
-            List<Category> categories = unit.CategoryRepository.GetAll();
-            if (categories.Count == 0)
+            var categories = unit.CategoryRepository.GetAll();
+            if (!categories.Any())
                 return new List<CategoryDTO>();
 
             List<CategoryDTO> categoryDTOs = new List<CategoryDTO>();
