@@ -8,6 +8,7 @@ namespace BlogSystemAPI.UnitOfWork
         AppDbContext db;
         GenaricRepository<BlogPost> PostRepo;
         GenaricRepository<Category> CategRopo;
+        GenaricRepository<Comment> CommRepo;
 
         public UnitWork(AppDbContext db)
         {
@@ -35,6 +36,18 @@ namespace BlogSystemAPI.UnitOfWork
                     CategRopo = new GenaricRepository<Category>(db);
                 }
                 return CategRopo;
+            }
+        }
+
+        public GenaricRepository<Comment> CommentRepository
+        {
+            get
+            {
+                if (CommRepo == null)
+                {
+                    CommRepo = new GenaricRepository<Comment>(db);
+                }
+                return CommRepo;
             }
         }
 

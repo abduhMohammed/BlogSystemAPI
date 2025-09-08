@@ -69,8 +69,7 @@ namespace BlogSystemAPI.Services
                        .GetAll()
                        .FirstOrDefault(c => c.Name == PDTO.CategoryName);
 
-            if (category == null)
-                throw new Exception("Invalid Category Name");
+            if (category == null) return null;
 
             BlogPost post = new BlogPost()
             {

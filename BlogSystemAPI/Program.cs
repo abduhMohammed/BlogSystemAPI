@@ -48,6 +48,7 @@ namespace BlogSystemAPI
             builder.Services.AddScoped<AccountService>();
             builder.Services.AddScoped<CategoryService>();
             builder.Services.AddScoped<PostService>();
+            builder.Services.AddScoped<CommentService>();
             builder.Services.AddScoped<UnitWork>();
 
             var app = builder.Build();

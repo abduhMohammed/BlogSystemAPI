@@ -38,6 +38,9 @@ namespace BlogSystemAPI.Controllers
             if(!ModelState.IsValid) return BadRequest(ModelState);
 
             var created =  service.Add(PDTO);
+            if (created == null)
+                return BadRequest(new { Message = "Failed to create blog post" });
+
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 

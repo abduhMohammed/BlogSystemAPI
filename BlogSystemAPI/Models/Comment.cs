@@ -10,7 +10,7 @@ namespace BlogSystemAPI.Models
         public string Content { get; set; }
 
         public DueDate CreatedAt { get; set; }
-
+        
         [ForeignKey("BlogPost")]
         public int BlogPostID { get; set; }
 
