@@ -1,3 +1,4 @@
+using BlogSystemAPI.AutoMapper;
 using BlogSystemAPI.Models;
 using BlogSystemAPI.Services;
 using BlogSystemAPI.UnitOfWork;
@@ -19,6 +20,9 @@ namespace BlogSystemAPI
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            //automapper
+            builder.Services.AddAutoMapper(typeof(MappingProfile));
 
             //DB
             builder.Services.AddDbContext<AppDbContext>(options =>

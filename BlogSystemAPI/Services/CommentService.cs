@@ -1,4 +1,5 @@
-﻿using BlogSystemAPI.DTO;
+﻿using AutoMapper;
+using BlogSystemAPI.DTO;
 using BlogSystemAPI.Models;
 using BlogSystemAPI.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -7,10 +8,13 @@ namespace BlogSystemAPI.Services
 {
     public class CommentService
     {
-        UnitWork unit;
-        public CommentService(UnitWork unit)
+        private readonly UnitWork unit;
+        private readonly IMapper mapper;
+
+        public CommentService(UnitWork unit, IMapper mapper)
         {
             this.unit = unit;
+            this.mapper = mapper;
         }
 
         //GeyByPost
@@ -36,22 +40,13 @@ namespace BlogSystemAPI.Services
 
             if (post == null) return null;
 
-            var comment = new Comment
-            {
-                Id = commentDTO.Id,
-                Content = commentDTO.Content,
-                BlogPostID = post.Id
-            };
+            Comment comment = mapper.Map<Comment>(commentDTO);
+            comment.BlogPostID = post.Id;
 
             unit.CommentRepository.Add(comment);
             unit.Save();
 
-            return new CommentDTO
-            {
-                Id = comment.Id,
-                Content = comment.Content,
-                PostTitle = post.Title
-            };
+            return mapper.Map<CommentDTO>(comment);
         }
 
         //Updtae Comment
@@ -76,9 +71,7 @@ namespace BlogSystemAPI.Services
                 return "NoChanges";
             }
 
-            exsitingComment.Id = commentDTO.Id;
-            exsitingComment.Content = commentDTO.Content;
-            exsitingComment.BlogPostID = post.Id;
+            mapper.Map(commentDTO, exsitingComment);
 
             unit.CommentRepository.Update(exsitingComment);
             unit.Save();

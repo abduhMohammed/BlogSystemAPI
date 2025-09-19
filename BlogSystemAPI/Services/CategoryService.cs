@@ -1,4 +1,5 @@
-﻿using BlogSystemAPI.DTO;
+﻿using AutoMapper;
+using BlogSystemAPI.DTO;
 using BlogSystemAPI.Models;
 using BlogSystemAPI.UnitOfWork;
 
@@ -6,10 +7,13 @@ namespace BlogSystemAPI.Services
 {
     public class CategoryService
     {
-        UnitWork unit;
-        public CategoryService(UnitWork unit)
+        private readonly UnitWork unit;
+        private readonly IMapper mapper;
+
+        public CategoryService(UnitWork unit, IMapper mapper)
         {
             this.unit = unit;
+            this.mapper = mapper;
         }
 
         public List<CategoryDTO> GetAll()
@@ -18,63 +22,38 @@ namespace BlogSystemAPI.Services
             if (!categories.Any())
                 return new List<CategoryDTO>();
 
-            List<CategoryDTO> categoryDTOs = new List<CategoryDTO>();
-            foreach(var category in categories)
-            {
-                CategoryDTO categoryDTO = new CategoryDTO
-                {
-                    Id = category.Id,
-                    Name = category.Name
-                };
-                categoryDTOs.Add(categoryDTO);
-            }
-            return categoryDTOs;
+            return mapper.Map<List<CategoryDTO>>(categories);
         }
 
         public CategoryDTO GetById(int id)
         {
             Category category = unit.CategoryRepository.GetById(id);
             if (category == null) return null;
-            else
-            {
-                CategoryDTO categoryDTO = new CategoryDTO
-                {
-                    Id = category.Id,
-                    Name = category.Name
-                };
-                return categoryDTO;
-            }
+
+            return mapper.Map<CategoryDTO>(category);
         }
 
         public CategoryDTO Add(CategoryDTO categoryDTO)
         {
-            Category category = new Category()
-            {
-                Id = categoryDTO.Id,
-                Name = categoryDTO.Name
-            };
+            Category category = mapper.Map<Category>(categoryDTO);
 
             unit.CategoryRepository.Add(category);
             unit.Save();
 
-            return new CategoryDTO
-            {
-                Id = category.Id,
-                Name = category.Name
-            };
+            return mapper.Map<CategoryDTO>(category);
         }
 
-        public String Update(int id, CategoryDTO categoryDTO)
+        public String Update(CategoryDTO categoryDTO)
         {
-            var existingCat = unit.CategoryRepository.GetById(id);
+            var existingCat = unit.CategoryRepository.GetById(categoryDTO.Id);
 
-            if (existingCat == null) return "Not Found";
-            if (existingCat.Id != id) return "Your ID is not match with the Saved Id";
+            if (existingCat == null) 
+                return "Category not found.";
 
             if (existingCat.Name == categoryDTO.Name)
                 return "No Changes";
 
-            existingCat.Name = categoryDTO.Name;
+            mapper.Map(categoryDTO, existingCat);
 
             unit.CategoryRepository.Update(existingCat);
             unit.Save();

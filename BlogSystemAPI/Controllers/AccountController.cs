@@ -1,6 +1,7 @@
 ﻿using BlogSystemAPI.DTO;
 using BlogSystemAPI.Models;
 using BlogSystemAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -46,6 +47,18 @@ namespace BlogSystemAPI.Controllers
                 return BadRequest(result.message);
 
             return Ok(result); 
+        }
+
+        [HttpPost("AddRole")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AddRole([FromBody]RoleDTO roleDTO)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await Service.AddRole(roleDTO);
+
+            return (result != null) ? BadRequest(result) : Ok(roleDTO);
         }
     }
 }

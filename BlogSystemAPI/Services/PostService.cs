@@ -1,4 +1,5 @@
-﻿using BlogSystemAPI.DTO;
+﻿using AutoMapper;
+using BlogSystemAPI.DTO;
 using BlogSystemAPI.Models;
 using BlogSystemAPI.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
@@ -7,10 +8,13 @@ namespace BlogSystemAPI.Services
 {
     public class PostService
     {
-        UnitWork unit;
-        public PostService(UnitWork unit)
+        private readonly UnitWork unit;
+        private readonly IMapper mapper;
+
+        public PostService(UnitWork unit, IMapper mapper)
         {
             this.unit = unit;
+            this.mapper = mapper;
         }
 
         public List<BlogPostDTO> GetAll()
@@ -23,21 +27,7 @@ namespace BlogSystemAPI.Services
             if (!posts.Any())
                 return new List<BlogPostDTO>();
 
-            List<BlogPostDTO> blogPostDTOs = new List<BlogPostDTO>();
-
-            foreach (var p in posts)
-            {
-                BlogPostDTO post = new BlogPostDTO()
-                {
-                    Id = p.Id,
-                    Title = p.Title,
-                    Content = p.Content,
-                    Status = p.Status,
-                    CategoryName = p.Category?.Name
-                };
-                blogPostDTOs.Add(post);
-            }
-            return blogPostDTOs;
+            return mapper.Map<List<BlogPostDTO>>(posts);
         }
 
         public BlogPostDTO GetById(int id)
@@ -48,19 +38,8 @@ namespace BlogSystemAPI.Services
                 .FirstOrDefault(p => p.Id == id);
 
             if (post == null) return null;
-            else
-            {
-                BlogPostDTO blogPostDTO = new BlogPostDTO()
-                {
-                    Id = post.Id,
-                    Title = post.Title,
-                    Content = post.Content,
-                    Status = post.Status,
-                    CategoryName = post.Category?.Name
-                };
 
-                return blogPostDTO;
-            }
+            return mapper.Map<BlogPostDTO>(post);
         }
 
         public BlogPostDTO Add(BlogPostDTO PDTO)
@@ -69,28 +48,16 @@ namespace BlogSystemAPI.Services
                        .GetAll()
                        .FirstOrDefault(c => c.Name == PDTO.CategoryName);
 
-            if (category == null) return null;
+            if (category == null) 
+                return null;
 
-            BlogPost post = new BlogPost()
-            {
-                Id = PDTO.Id,
-                Title = PDTO.Title,
-                Content = PDTO.Content,
-                Status = PDTO.Status,
-                CategoryID = category.Id
-            };
+            var post = mapper.Map<BlogPost>(PDTO);
+            post.Category = category;
 
             unit.PostRepository.Add(post);
             unit.Save();
 
-            return new BlogPostDTO
-            {
-                Id = post.Id,
-                Title = post.Title,
-                Content = post.Content,
-                Status = post.Status,
-                CategoryName = category.Name
-            };
+            return mapper.Map<BlogPostDTO>(post);
         }
 
         public string Update(BlogPostDTO PDTO)
@@ -119,11 +86,7 @@ namespace BlogSystemAPI.Services
                 return "NoChanges";
             }
 
-            // Apply updates
-            existingPost.Title = PDTO.Title;
-            existingPost.Content = PDTO.Content;
-            existingPost.Status = PDTO.Status;
-            existingPost.CategoryID = category.Id;
+            mapper.Map(PDTO, existingPost);
 
             unit.PostRepository.Update(existingPost);
             unit.Save();

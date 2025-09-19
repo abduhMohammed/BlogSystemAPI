@@ -49,10 +49,8 @@ namespace BlogSystemAPI.Services
                 }
             }
 
-            if (await RoleManager.RoleExistsAsync("User"))
-            {
-                await Usermanager.AddToRoleAsync(user, "User");
-            }
+            //Assign the default role "User" to the new account
+            await Usermanager.AddToRoleAsync(user, "User");
 
             return new AuthDTO
             {
@@ -116,6 +114,20 @@ namespace BlogSystemAPI.Services
                 token = tokenString,
                 ExpiresOn = DateTime.UtcNow.AddHours(1)
             };
+        }
+
+        public async Task<String> AddRole(RoleDTO roleDTO)
+        {
+            var user = await Usermanager.FindByIdAsync(roleDTO.UserId);
+            var role = await RoleManager.FindByNameAsync(roleDTO.Role);
+
+            if (user is null || role is null) return "User Id or Role Not Found";
+
+            var found = await Usermanager.IsInRoleAsync(user, roleDTO.Role);
+            if (found) return "User Already Assigned to this Role";
+
+            IdentityResult result = await Usermanager.AddToRoleAsync(user, roleDTO.Role);
+            return (result.Succeeded) ? "Role assigned successfully" : "Somthing went Wrong"; 
         }
     }
 }

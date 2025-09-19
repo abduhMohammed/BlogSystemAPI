@@ -1,6 +1,5 @@
 ﻿using BlogSystemAPI.DTO;
 using BlogSystemAPI.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BlogSystemAPI.Controllers
@@ -42,14 +41,19 @@ namespace BlogSystemAPI.Controllers
         [HttpPut("{id}")]
         public IActionResult Update(int id, [FromBody]CategoryDTO categoryDTO)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid) 
+                return BadRequest(ModelState);
+            if (id != categoryDTO.Id)
+                return BadRequest("ID in the URL path does not match the ID in the request body.");
+            
+            var Updated = CategoryService.Update(categoryDTO);
 
-            var Updated = CategoryService.Update(id, categoryDTO);
+            if (Updated == "Updated")
+                return Ok("Category Updated Successfully");
+            else if (Updated == "No Changes") 
+                return Ok("No Changes were made to the category");
 
-            if (Updated == "Not Found") return NotFound();
-            if (Updated == "No Changes") return Ok("No Changes were made to the category");
-
-            return Ok(new AuthDTO { message = "Category Updated Successfully" });
+            return NotFound();
         }
 
         [HttpDelete("{id}")]
