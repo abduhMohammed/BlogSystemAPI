@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BlogSystemAPI.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace BlogSystemAPI.DTO
 {
@@ -9,5 +10,7 @@ namespace BlogSystemAPI.DTO
         [Display(Name ="Category Name")]
         [Required]
         public string? Name { get; set; }
+
+        public List<BlogPostDTO> blogPosts { get; set; } = new List<BlogPostDTO>();
     }
 }

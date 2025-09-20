@@ -2,6 +2,7 @@
 using BlogSystemAPI.DTO;
 using BlogSystemAPI.Models;
 using BlogSystemAPI.UnitOfWork;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlogSystemAPI.Services
 {
@@ -18,7 +19,11 @@ namespace BlogSystemAPI.Services
 
         public List<CategoryDTO> GetAll()
         {
-            var categories = unit.CategoryRepository.GetAll();
+            var categories = unit.CategoryRepository
+                .GetAll()
+                .Include(c => c.blogPosts)
+                .ToList();
+
             if (!categories.Any())
                 return new List<CategoryDTO>();
 
@@ -27,7 +32,11 @@ namespace BlogSystemAPI.Services
 
         public CategoryDTO GetById(int id)
         {
-            Category category = unit.CategoryRepository.GetById(id);
+            Category? category = unit.CategoryRepository
+                .GetAll()
+                .Include(c => c.blogPosts)
+                .FirstOrDefault(c => c.Id == id);
+                
             if (category == null) return null;
 
             return mapper.Map<CategoryDTO>(category);
